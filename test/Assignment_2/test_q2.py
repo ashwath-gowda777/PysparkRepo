@@ -1,6 +1,6 @@
 import unittest
 from pyspark.sql import SparkSession
-from utils import mask_card_number
+from PysparkRepo.src.Assignment_2.utils import *
 
 class TestMaskCardNumber(unittest.TestCase):
     def setUp(self):
