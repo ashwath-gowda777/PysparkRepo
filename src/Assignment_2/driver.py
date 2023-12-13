@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from utils_q2 import mask_card_udf
+from utils import *
 
 # Create a SparkSession
 spark = SparkSession.builder.appName("CreditCardData").getOrCreate()
