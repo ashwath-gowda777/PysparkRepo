@@ -45,20 +45,14 @@ purchase_data_df = spark.createDataFrame(purchase_data, schema=purchase_data_sch
 product_data_df = spark.createDataFrame(product_data, schema=product_data_schema)
 
 # Show the DataFrames
-print("purchase_data_df:")
 purchase_data_df.show()
-
-print("product_data_df:")
 product_data_df.show()
 
 ##Find the customers who have bought only product A
-print("Customers who have bought only product A:")
 find_customers_bought_only_A(purchase_data_df).show()
 
 ##Find customers who upgraded from product B to product E
-print("Customers who upgraded from product B to product E:")
 find_customers_upgraded_B_to_E(purchase_data_df).show()
 
 ##Find customers who have bought all models in the new Product Data
-print("Customers who have bought all models in the new Product Data:")
 find_customers_bought_all_models(purchase_data_df, product_data_df).show()
