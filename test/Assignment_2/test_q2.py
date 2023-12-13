@@ -12,7 +12,7 @@ class TestMaskCardNumber(unittest.TestCase):
             "5678912345671234": "************1234",
             "9123456712345678": "************5678",
             "1234567812341122": "************1122",
-            "1234": "1234"  # Should not mask if length is less than 4
+            "1234": "1234"
         }
 
         for card_number, expected_masked in test_cases.items():
