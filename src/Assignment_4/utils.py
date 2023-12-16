@@ -1,36 +1,59 @@
-from pyspark.sql.functions import col, explode, explode_outer, posexplode, current_date, year, month, dayofmonth
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import explode, posexplode, col, explode_outer, lit, year, month, dayofmonth
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType
+from datetime import datetime
 
-def read_json_data(spark, file_path):
-    df = spark.read.option("multiline", "true").json(file_path)
-    return df
 
-def get_record_count(df):
-    return df.count()
-
-def flatten_json_data(df):
-    flattened_df = df.withColumn("employees", explode(col("employees")))
-    return flattened_df
-
-def define_custom_schema(spark, file_path):
+def read_json_with_schema(spark, file_path):
     custom_schema = StructType([
         StructField("id", IntegerType(), True),
         StructField("properties", StructType([
             StructField("name", StringType(), True),
-            StructField("storeSize", StringType(), True)
+            StructField("storeSize", StringType(), True),
         ]), True),
         StructField("employees", ArrayType(StructType([
             StructField("empId", IntegerType(), True),
-            StructField("empName", StringType(), True)
-        ])), True)
+            StructField("empName", StringType(), True),
+        ])), True),
     ])
-    df_with_schema = spark.read.schema(custom_schema).json(file_path)
-    return df_with_schema
 
-def add_date_columns(df):
-    df_with_load_date = df.withColumn("load_date", current_date())
-    df_with_date_columns = df_with_load_date.withColumn("year", year("load_date")).withColumn("month", month("load_date")).withColumn("day", dayofmonth("load_date"))
-    return df_with_date_columns
+    return spark.read.json(file_path, schema=custom_schema)
 
-def write_partitioned_table(df):
-    df.write.partitionBy("year", "month", "day").mode("overwrite").format("json").saveAsTable("employee.employee_details")
+
+def read_json_without_schema(spark, file_path):
+    return spark.read.json(file_path)
+
+
+def flatten_dataframe(df):
+    return df.select(
+        col("id"),
+        col("properties.name").alias("company_name"),
+        col("properties.storeSize").alias("store_size"),
+        explode("employees").alias("employee")
+    )
+
+
+def explode_data(df):
+    return df.select("id", explode("data").alias("exploded_data"))
+
+
+def filter_data_by_id(df, target_id):
+    return df.filter(f"id == '{target_id}'")
+
+
+def convert_to_snake_case(df):
+    return df.toDF(*(col_name.lower() for col_name in df.columns))
+
+
+def add_load_date_column(df):
+    return df.withColumn("load_date", lit(datetime.now().date()))
+
+
+def add_date_parts_columns(df):
+    return df.withColumn("year", year("load_date")).withColumn("month", month("load_date")).withColumn("day",
+                                                                                                       dayofmonth(
+                                                                                                           "load_date"))
+
+
+def filter_data_by_id(df, target_id):
+    return df.filter(f"id == '{target_id}'")
