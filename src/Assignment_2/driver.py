@@ -1,4 +1,6 @@
 from pyspark.sql import SparkSession
+from pyspark.sql.functions import udf
+from pyspark.sql.types import StringType
 from utils import *
 
 # Create a SparkSession
@@ -17,27 +19,34 @@ data = [
 schema = ["card_number"]
 
 # Create DataFrame using createDataFrame method
-credit_card_df = spark.createDataFrame(data, schema)
+credit_card_df = create_credit_card_dataframe(spark, data, schema)
 
 # Show the DataFrame
 credit_card_df.show()
 
 # Get the number of partitions
 num_partitions = credit_card_df.rdd.getNumPartitions()
+print("Number of partitions:", num_partitions)
 
-
-# Repartition the DataFrame
-repartitioned_df = credit_card_df.repartition(13)
-repartitioned_partitions = repartitioned_df.rdd.getNumPartitions()
-
+# Repartition the DataFrame to increase the partition size to 5
+increase_credit_card_df = increase_partitions(credit_card_df, 5)
+increase_num_partitions = increase_credit_card_df.rdd.getNumPartitions()
+print("Number of increased_partitions:", increase_num_partitions)
 
 # Reduce the partition size back to its original size
-back_to_og_credit_card_df = repartitioned_df.coalesce(num_partitions)
+back_to_og_credit_card_df = back_to_original_partitions(increase_credit_card_df, num_partitions)
 back_num_partitions = back_to_og_credit_card_df.rdd.getNumPartitions()
+print("Number of back_to_og_partitions:", num_partitions)
+
+# Save DataFrame to disk in Parquet format
+parquet_path = r"C:\Users\Admin\OneDrive\Desktop\Pyspark Assignment\Output_files\Q2"
+save_and_read_parquet(credit_card_df, parquet_path)
+
+# Create a UDF to print only last 4 digits marking remaining digits as *
+mask_card_udf = mask_card_number_udf()
+
+# Apply the UDF to create a new column 'masked_card_number' and show the DataFrame
+show_masked_credit_card(credit_card_df, mask_card_udf)
 
 
-# Apply the UDF to create a new column 'masked_card_number'
-masked_credit_card_df = back_to_og_credit_card_df.withColumn("masked_card_number", mask_card_udf()("card_number"))
 
-# Show the DataFrame with masked card numbers and repartitioned data
-masked_credit_card_df.show()
