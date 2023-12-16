@@ -1,13 +1,27 @@
-from pyspark.sql.functions import udf
-from pyspark.sql.types import StringType
+from pyspark.sql.functions import *
 
-## Function to mask the card number
-def mask_card_number(card_number):
-    if len(card_number) >= 4:
-        return "*" * (len(card_number) - 4) + card_number[-4:]
-    else:
-        return card_number
+def create_credit_card_dataframe(spark, data, schema):
+    return spark.createDataFrame(data, schema)
 
-## Register the UDF
-def mask_card_udf():
+def increase_partitions(df, new_partitions):
+    return df.repartition(new_partitions)
+
+def back_to_original_partitions(df, original_partitions):
+    return df.coalesce(original_partitions)
+
+def save_and_read_parquet(df, path):
+    df.write.parquet(path, mode="overwrite")
+    return spark.read.parquet(path)
+
+def mask_card_number_udf():
+    def mask_card_number(card_number):
+        if len(card_number) >= 4:
+            return "*" * (len(card_number) - 4) + card_number[-4:]
+        else:
+            return card_number
+
     return udf(mask_card_number, StringType())
+
+def show_masked_credit_card(df, mask_udf):
+    df = df.withColumn("masked_card_number", mask_udf("card_number"))
+    df.show()
