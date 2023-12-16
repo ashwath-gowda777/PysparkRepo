@@ -1,42 +1,54 @@
 import unittest
 from pyspark.sql import SparkSession
-from utils import *
+from PysparkRepo.src.Assignment_4.utils import *
 
-class TestUtils(unittest.TestCase):
+class TestEmployeeDetails(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.spark = SparkSession.builder.appName("TestReadJSON").getOrCreate()
-        cls.file_path = "path_to_json_file"  # Replace "path_to_json_file" with your file path
-        cls.df = read_json_data(cls.spark, cls.file_path)
+        cls.spark = SparkSession.builder.appName("TestEmployeeDetails").getOrCreate()
+        cls.json_file_path = r"C:\Users\Admin\OneDrive\Desktop\Nested_json_file.json"
+        cls.json_data_file_path = r"C:\Users\Admin\OneDrive\Desktop\Nested_json_file.json"
+        cls.id_value = "0001"
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.spark.stop()
+    def test_read_json_with_schema(self):
+        df = read_json_with_schema(self.spark, self.json_file_path)
+        self.assertEqual(df.count(), 10)
 
-    def test_get_record_count(self):
-        record_count = get_record_count(self.df)
-        self.assertIsInstance(record_count, int)
-        self.assertGreaterEqual(record_count, 0)
+    def test_read_json_without_schema(self):
+        df = read_json_without_schema(self.spark, self.json_file_path)
+        self.assertEqual(df.count(), 10)
 
-    def test_flatten_json_data(self):
-        flattened_df = flatten_json_data(self.df)
-        self.assertIsNotNone(flattened_df)
-        self.assertEqual(flattened_df.columns, ["id", "properties", "employees"])
+    def test_flatten_dataframe(self):
+        df = read_json_with_schema(self.spark, self.json_file_path)
+        df_flattened = flatten_dataframe(df)
+        self.assertEqual(df_flattened.count(), 20)
 
-    def test_define_custom_schema(self):
-        df_with_schema = define_custom_schema(self.spark, self.file_path)
-        self.assertIsNotNone(df_with_schema)
-        self.assertEqual(df_with_schema.columns, ["id", "properties", "employees"])
+    def test_explode_data(self):
+        json_df = read_json_without_schema(self.spark, self.json_data_file_path)
+        exploded_json_df = explode_data(json_df)
+        self.assertEqual(exploded_json_df.count(), 5)
 
-    def test_add_date_columns(self):
-        df_with_date_columns = add_date_columns(self.df)
-        self.assertIsNotNone(df_with_date_columns)
-        self.assertEqual(df_with_date_columns.columns, ["id", "properties", "employees", "load_date", "year", "month", "day"])
+    def test_filter_data_by_id(self):
+        json_df = read_json_without_schema(self.spark, self.json_data_file_path)
+        filtered_json_df = filter_data_by_id(json_df, self.id_value)
+        self.assertEqual(filtered_json_df.count(), 1)
 
-    def test_write_partitioned_table(self):
-        write_partitioned_table(self.df)
-        # You can add assertions here to validate the writing process or check the table properties
-        # For example, you can verify table existence or the number of partitions
+    def test_convert_to_snake_case(self):
+        df = read_json_with_schema(self.spark, self.json_file_path)
+        df_snake_case = convert_to_snake_case(df)
+        self.assertEqual(df_snake_case.count(), 10)
+
+    def test_add_load_date_column(self):
+        df = read_json_with_schema(self.spark, self.json_file_path)
+        df_with_load_date = add_load_date_column(df)
+        self.assertEqual(df_with_load_date.count(), 10)
+
+    def test_add_date_parts_columns(self):
+        df = read_json_with_schema(self.spark, self.json_file_path)
+        df_with_date_parts = add_date_parts_columns(df)
+        self.assertEqual(df_with_date_parts.count(), 10)
+
+
 
 if __name__ == '__main__':
     unittest.main()
